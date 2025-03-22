@@ -34,6 +34,7 @@ public static class ServicesExtensions
 
             x.AddRider(rider =>
             {
+                rider.AddConsumer<ConsumerSecond>();
                 rider.AddConsumer<KafkaMessageConsumer>();
 
                 rider.UsingKafka((context, k) =>
@@ -42,6 +43,7 @@ public static class ServicesExtensions
 
                     k.TopicEndpoint<ProductCreatedEvent>("test-topic", "product-group-name", e =>
                     {
+                        e.ConfigureConsumer<ConsumerSecond>(context);
                         e.ConfigureConsumer<KafkaMessageConsumer>(context);
                     });
                 });
