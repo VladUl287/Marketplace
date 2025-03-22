@@ -1,0 +1,2 @@
+﻿internal interface IApiMarker
+{}

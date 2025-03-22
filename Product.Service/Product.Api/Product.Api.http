@@ -1,0 +1,14 @@
+@Product.Api_HostAddress = https://localhost:7278
+
+GET {{Product.Api_HostAddress}}/configuration/get
+Accept: application/json
+
+###
+
+GET {{Product.Api_HostAddress}}/configuration/getMonitor
+Accept: application/json
+
+###
+
+GET {{Product.Api_HostAddress}}/Kafka/Publish?message=bebebe
+Accept: application/json
