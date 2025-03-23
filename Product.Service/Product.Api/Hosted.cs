@@ -26,29 +26,29 @@ public class Hosted(IServiceProvider serviceProvider) : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var messages = await dbContext.Outbox
-                .Where(c => c.CreatedAt >= lastUpdate)
-                .ToArrayAsync(stoppingToken);
+            //var messages = await dbContext.Outbox
+            //    .Where(c => c.CreatedAt >= lastUpdate)
+            //    .ToArrayAsync(stoppingToken);
 
-            if (messages is { Length: > 0 })
-            {
-                foreach (var message in messages)
-                {
-                    var payload = JObject.Parse(message.Payload);
-                    var topic = payload.GetValue("Topic");
-                    if (topic is null or { Type: not JTokenType.String })
-                    {
-                        continue;
-                    }
+            //if (messages is { Length: > 0 })
+            //{
+                //foreach (var message in messages)
+                //{
+                //    var payload = JObject.Parse(message.Payload);
+                //    var topic = payload.GetValue("Topic");
+                //    if (topic is null or { Type: not JTokenType.String })
+                //    {
+                //        continue;
+                //    }
 
-                    var messageKafka = new Message<Null, string>
-                    {
-                        Value = message.Payload
-                    };
+                //    var messageKafka = new Message<Null, string>
+                //    {
+                //        Value = message.Payload
+                //    };
 
-                    var topicName = topic.ToString();
-                    await producer.ProduceAsync(topicName, messageKafka, stoppingToken);
-                }
+                //    var topicName = topic.ToString();
+                //    await producer.ProduceAsync(topicName, messageKafka, stoppingToken);
+                //}
 
                 //var producer = provider.GetProducer<ProductCreatedEvent>(new Uri("topic:test-topic"));
                 //foreach (var message in messages)
@@ -60,7 +60,7 @@ public class Hosted(IServiceProvider serviceProvider) : BackgroundService
                 //        Id = Guid.NewGuid()
                 //    }, stoppingToken);
                 //}
-            }
+            //}
 
             //var producer = provider.GetProducer<ProductCreatedEvent>(new Uri("topic:test-topic"));
             //await producer.Produce(new ProductCreatedEvent()
@@ -68,7 +68,7 @@ public class Hosted(IServiceProvider serviceProvider) : BackgroundService
             //    Id = Guid.NewGuid()
             //}, stoppingToken);
 
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
         }
     }
 }
