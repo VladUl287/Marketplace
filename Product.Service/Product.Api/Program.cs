@@ -3,13 +3,13 @@ using Product.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 {
-    builder.AddVault();
+    //builder.AddVault();
 
     builder.AddOptions();
 
     builder.AddDatabase();
 
-    builder.AddEventBus();
+    builder.AddKafkaBus();
 
     builder.Services.AddHostedService<Hosted>();
 

@@ -33,6 +33,14 @@ public sealed class CreateProductCommand(ITopicProducerProvider topicProducerPro
             })
         };
         await dbContext.Outbox.AddAsync(outbox, cancellationToken);
+        outbox = new Outbox
+        {
+            Payload = JsonSerializer.Serialize(new ProductUpdatedEvent
+            {
+                Id = productDto.Id
+            })
+        };
+        await dbContext.Outbox.AddAsync(outbox, cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
