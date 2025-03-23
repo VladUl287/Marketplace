@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 using static Vault.AspNet.VaultConfigurationSource;
@@ -10,12 +9,20 @@ public sealed class VaultKeyValueConfigurationProvider(
     IVaultClient vaultClient, string path, int? version = null,
     string? mountPoint = null, string? wrapTimeToLive = null) : ConfigurationProvider
 {
+    private int _lastKnownVersion = -1;
+
     public override void Load()
     {
+        var test = vaultClient.V1.Secrets.KeyValue.V2.ReadSecretMetadataAsync(path, mountPoint, wrapTimeToLive)
+            .GetAwaiter()
+            .GetResult();
+
         var secret = vaultClient.V1.Secrets.KeyValue.V2
             .ReadSecretAsync(path, version, mountPoint, wrapTimeToLive)
             .GetAwaiter()
             .GetResult();
+
+        //Interlocked.Exchange(_lastKnownVersion, );
 
         try
         {
@@ -29,52 +36,11 @@ public sealed class VaultKeyValueConfigurationProvider(
 
                 Data.Add(kvp.Key, kvp.Value.ToString());
             }
-
-            //var jsonObject = JObject.Parse(_jsonString);
-
-            //var keyValuePairs = ParseJsonToDictionary(jsonObject);
-
-            //foreach (var kvp in keyValuePairs)
-            //{
-            //    if (Data.ContainsKey(kvp.Key))
-            //    {
-            //        Data[kvp.Key] = kvp.Value;
-            //        continue;
-            //    }
-
-            //    Data.Add(kvp.Key, kvp.Value);
-            //}
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException("Failed to load JSON string configuration", ex);
         }
-    }
-
-
-    private Dictionary<string, string> ParseJsonToDictionary(JObject jsonObject, string prefix = "")
-    {
-        var dictionary = new Dictionary<string, string>();
-
-        foreach (var property in jsonObject.Properties())
-        {
-            var key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}:{property.Name}";
-
-            if (property.Value.Type == JTokenType.Object)
-            {
-                var nestedDict = ParseJsonToDictionary((JObject)property.Value, key);
-                foreach (var nested in nestedDict)
-                {
-                    dictionary.Add(nested.Key, nested.Value);
-                }
-            }
-            else
-            {
-                dictionary.Add(key, property.Value.ToString());
-            }
-        }
-
-        return dictionary;
     }
 }
 

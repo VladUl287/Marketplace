@@ -16,6 +16,15 @@ public sealed class RefreshConfigJob(ILogger<RefreshConfigJob> logger, IConfigur
                 return Task.CompletedTask;
             }
 
+            var configurationProvider = configurationRoot.Providers.FirstOrDefault(c => c is VaultKeyValueConfigurationProvider);
+            if (configurationProvider is not null)
+            {
+                logger.LogInformation("Reload configuration for provider start '{now}'.", DateTime.UtcNow);
+                configurationProvider.Load();
+                logger.LogInformation("Reload configuration for provider end.");
+                return Task.CompletedTask;
+            }
+
             logger.LogInformation("Reload configuration start '{now}'.", DateTime.UtcNow);
             configurationRoot.Reload();
             logger.LogInformation("Reload configuration end.");
