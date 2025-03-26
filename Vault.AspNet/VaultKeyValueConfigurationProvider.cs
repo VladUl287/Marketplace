@@ -9,20 +9,12 @@ public sealed class VaultKeyValueConfigurationProvider(
     IVaultClient vaultClient, string path, int? version = null,
     string? mountPoint = null, string? wrapTimeToLive = null) : ConfigurationProvider
 {
-    private int _lastKnownVersion = -1;
-
     public override void Load()
     {
-        var test = vaultClient.V1.Secrets.KeyValue.V2.ReadSecretMetadataAsync(path, mountPoint, wrapTimeToLive)
-            .GetAwaiter()
-            .GetResult();
-
         var secret = vaultClient.V1.Secrets.KeyValue.V2
             .ReadSecretAsync(path, version, mountPoint, wrapTimeToLive)
             .GetAwaiter()
             .GetResult();
-
-        //Interlocked.Exchange(_lastKnownVersion, );
 
         try
         {

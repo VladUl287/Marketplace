@@ -1,5 +1,4 @@
-﻿using Confluent.Kafka;
-using MassTransit;
+﻿using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Product.Api.Consumers;
 using Product.Api.Options;
@@ -15,7 +14,7 @@ public static class ServicesExtensions
     {
         builder.Configuration.AddVaultKeyValueSource((options) =>
         {
-            options.Token = "";
+            options.Token = "root";
             options.Url = "http://localhost:8200";
             options.Path = "product";
             options.MountPoint = "secret";
@@ -30,15 +29,6 @@ public static class ServicesExtensions
 
     public static IHostApplicationBuilder AddKafkaBus(this IHostApplicationBuilder builder)
     {
-        //builder.Services.AddTransient<IProducer<Null, string>>(serviceProvider =>
-        //{
-        //    var config = new ProducerConfig
-        //    {
-        //        BootstrapServers = "localhost:9092"  // replace with your Kafka server
-        //    };
-        //    return new ProducerBuilder<Null, string>(config).Build();
-        //});
-
         builder.Services.AddMassTransit(x =>
         {
             x.UsingInMemory();
@@ -55,25 +45,19 @@ public static class ServicesExtensions
                     k.TopicEndpoint<ProductCreatedEvent>("product-created", "product-group-name", e =>
                     {
                         e.ConfigureConsumer<ProductCreatedConsumer>(context);
-                        e.UseDelayedRedelivery(r => r.Intervals([
-                            TimeSpan.FromMinutes(5),
-                            TimeSpan.FromMinutes(15),
-                            TimeSpan.FromMinutes(30),
-                            TimeSpan.FromMinutes(60)
-                        ]));
-                        e.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5)));
+                        e.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5)));
                     });
 
                     k.TopicEndpoint<ProductUpdatedEvent>("product-updated", "product-group-name", e =>
                     {
                         e.ConfigureConsumer<ProductUpdatedConsumer>(context);
-                        e.UseDelayedRedelivery(r => r.Intervals([
-                            TimeSpan.FromMinutes(5),
-                            TimeSpan.FromMinutes(15),
-                            TimeSpan.FromMinutes(30),
-                            TimeSpan.FromMinutes(60)
-                        ]));
-                        e.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5)));
+                        //e.UseDelayedRedelivery(r => r.Intervals([
+                        //    TimeSpan.FromMinutes(5),
+                        //    TimeSpan.FromMinutes(15),
+                        //    TimeSpan.FromMinutes(30),
+                        //    TimeSpan.FromMinutes(60)
+                        //]));
+                        e.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5)));
                     });
                 });
             });
@@ -84,8 +68,7 @@ public static class ServicesExtensions
 
     public static IHostApplicationBuilder AddDatabase(this IHostApplicationBuilder builder)
     {
-        //var dbConnection = builder.Configuration.GetValue<string>("Database:ConnectionString");
-        var dbConnection = "Data Source = custom.db";
+        var dbConnection = builder.Configuration.GetValue<string>("Database:Connection");
         ArgumentNullException.ThrowIfNull(dbConnection);
 
         builder.Services.AddDbContext<ProductsDbContext>(options =>

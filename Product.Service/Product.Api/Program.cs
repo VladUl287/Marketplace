@@ -8,13 +8,19 @@ using Product.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 {
+    builder.AddVault();
+
     //builder.Logging.ClearProviders();
 
-    static void OtlpConfig(OtlpExporterOptions exOptions)
+    static void OtlpConfig(OtlpExporterOptions exOptions, IConfiguration configuration)
     {
-        exOptions.Endpoint = new Uri("http://localhost:5341/ingest/otlp/v1/logs");
+        var config = configuration.GetSection("OpenTelemetry");
+        var url = config.GetValue<string>("Connection") ?? throw new NullReferenceException();
+        var headers = config.GetValue<string>("Headers") ?? throw new NullReferenceException();
+
+        exOptions.Endpoint = new Uri(url);
         exOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
-        exOptions.Headers = "";
+        exOptions.Headers = headers;
     }
 
     builder.Logging.AddOpenTelemetry(options =>
@@ -22,23 +28,21 @@ var builder = WebApplication.CreateBuilder(args);
         options
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("aspnet"))
             .AddConsoleExporter()
-            .AddOtlpExporter(OtlpConfig)
-            ;
+            .AddOtlpExporter((options) => OtlpConfig(options, builder.Configuration));
     });
+    var configuration = builder.Configuration;
     builder.Services.AddOpenTelemetry()
           .ConfigureResource(resource => resource.AddService("aspnet"))
           .WithTracing(tracing => tracing
               .AddSource("aspnet")
               .AddAspNetCoreInstrumentation()
               .AddConsoleExporter()
-              .AddOtlpExporter(OtlpConfig))
+              .AddOtlpExporter((options) => OtlpConfig(options, builder.Configuration)))
           .WithMetrics(metrics => metrics
               .AddMeter("aspnet")
               .AddAspNetCoreInstrumentation()
               .AddConsoleExporter()
-              .AddOtlpExporter(OtlpConfig));
-
-    //builder.AddVault();
+              .AddOtlpExporter((options) => OtlpConfig(options, builder.Configuration)));
 
     builder.AddOptions();
 
