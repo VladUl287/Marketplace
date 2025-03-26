@@ -1,6 +1,4 @@
-﻿using Mapster;
-using MassTransit;
-using MediatR;
+﻿using FastEndpoints;
 using Product.Api.DTOs;
 using Product.Core.Entities;
 using Product.Core.Events;
@@ -9,21 +7,20 @@ using System.Text.Json;
 
 namespace Product.Api.Commands;
 
-public sealed class CreateProductCommand(ITopicProducerProvider topicProducerProvider, ProductsDbContext dbContext) : IRequestHandler<CreateProductRequest, ProductDTO>
+public sealed class CreateProductCommand(ProductsDbContext dbContext) : Endpoint<CreateProductRequest, ProductDTO>
 {
-    public async Task<ProductDTO> Handle(CreateProductRequest request, CancellationToken cancellationToken)
+    public override void Configure()
     {
-        //var producer = topicProducerProvider.GetProducer<ProductCreatedEvent>(new Uri("test-topic"));
+        Get("/product/create");
+        AllowAnonymous();
+    }
 
+    public override async Task HandleAsync(CreateProductRequest request, CancellationToken token)
+    {
         var productDto = new ProductDTO
         {
             Id = Guid.CreateVersion7()
         };
-
-        //await producer.Produce(product, cancellationToken);
-
-        //var product = productDto.Adapt<Commodity>();
-        //await dbContext.Products.AddAsync(product, cancellationToken);
 
         var outbox = new Outbox
         {
@@ -32,7 +29,7 @@ public sealed class CreateProductCommand(ITopicProducerProvider topicProducerPro
                 Id = productDto.Id
             })
         };
-        await dbContext.Outbox.AddAsync(outbox, cancellationToken);
+        await dbContext.Outbox.AddAsync(outbox, token);
         outbox = new Outbox
         {
             Payload = JsonSerializer.Serialize(new ProductUpdatedEvent
@@ -40,10 +37,10 @@ public sealed class CreateProductCommand(ITopicProducerProvider topicProducerPro
                 Id = productDto.Id
             })
         };
-        await dbContext.Outbox.AddAsync(outbox, cancellationToken);
+        await dbContext.Outbox.AddAsync(outbox, token);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(token);
 
-        return productDto;
+        await SendAsync(productDto, cancellation: token);
     }
 }

@@ -10,5 +10,5 @@ Accept: application/json
 
 ###
 
-GET {{Product.Api_HostAddress}}/Kafka/Publish?message=bebebe
+GET {{Product.Api_HostAddress}}/product/fetch?page=1&size=25
 Accept: application/json
