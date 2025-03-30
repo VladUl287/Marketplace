@@ -30,26 +30,59 @@ public static class ServicesExtensions
             exOptions.Headers = headers;
         }
 
-        builder.Logging.AddOpenTelemetry(options =>
-        {
-            options
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("aspnet"))
-                .AddConsoleExporter()
-                .AddOtlpExporter((options) => OtlpConfig(options, builder.Configuration));
-        });
+        var serviceName = "aspnet";
+        var serviceVersion = "1.0.0";
         var configuration = builder.Configuration;
+        var resource = ResourceBuilder.CreateDefault().AddService(serviceName: serviceName, serviceVersion: serviceVersion);
         builder.Services.AddOpenTelemetry()
-              .ConfigureResource(resource => resource.AddService("aspnet"))
-              .WithTracing(tracing => tracing
-                  .AddSource("aspnet")
-                  .AddAspNetCoreInstrumentation()
-                  .AddConsoleExporter()
-                  .AddOtlpExporter((options) => OtlpConfig(options, builder.Configuration)))
-              .WithMetrics(metrics => metrics
-                  .AddMeter("aspnet")
-                  .AddAspNetCoreInstrumentation()
-                  .AddConsoleExporter()
-                  .AddOtlpExporter((options) => OtlpConfig(options, builder.Configuration)));
+            .WithMetrics(builder =>
+            {
+                builder.AddPrometheusExporter();
+
+                builder.AddMeter("Microsoft.AspNetCore.Hosting",
+                                 "Microsoft.AspNetCore.Server.Kestrel");
+                builder.AddView("http.server.request.duration",
+                    new ExplicitBucketHistogramConfiguration
+                    {
+                        Boundaries = new double[] { 0, 0.005, 0.01, 0.025, 0.05,
+                       0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 }
+                    });
+
+                //tcb
+                //    .AddMeter(serviceName)
+                //    .SetResourceBuilder(resource)
+                //    .AddAspNetCoreInstrumentation()
+                //    .AddConsoleExporter()
+                //    .AddPrometheusExporter()
+                //;
+                //tcb.AddView("http.server.request.duration",
+                //    new ExplicitBucketHistogramConfiguration
+                //    {
+                //        Boundaries = new double[] { 0, 0.005, 0.01, 0.025, 0.05,
+                //                       0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 }
+                //    });
+            })
+            ;
+        //builder.Services.AddOpenTelemetry()
+        //      .ConfigureResource(resource => resource.AddService("aspnet"))
+        //      .WithTracing(tracing => tracing
+        //          .AddSource("aspnet")
+        //          .AddAspNetCoreInstrumentation()
+        //          .AddConsoleExporter()
+        //          .AddOtlpExporter((options) => OtlpConfig(options, builder.Configuration)))
+        //      .WithMetrics(metrics => metrics
+        //          .AddMeter("aspnet")
+        //          .AddAspNetCoreInstrumentation()
+        //          .AddConsoleExporter()
+        //          .AddOtlpExporter((options) => OtlpConfig(options, builder.Configuration)));
+        //builder.Logging.AddOpenTelemetry(options =>
+        //{
+        //    options
+        //        .SetResourceBuilder(resource)
+        //        .AddConsoleExporter()
+        //        .AddOtlpExporter((options) => OtlpConfig(options, builder.Configuration))
+        //        ;
+        //});
 
         return builder;
     }
@@ -64,9 +97,9 @@ public static class ServicesExtensions
             options.MountPoint = "secret";
         });
 
-        builder.Services.AddVaultHostedService((schedule) => schedule
-            .WithIntervalInSeconds(60)
-            .RepeatForever());
+        //builder.Services.AddVaultHostedService((schedule) => schedule
+        //    .WithIntervalInSeconds(60)
+        //    .RepeatForever());
 
         return builder;
     }

@@ -10,5 +10,10 @@ Accept: application/json
 
 ###
 
+GET {{Product.Api_HostAddress}}/product/get?id=885331d6-e4e8-442c-8596-bef3a0c09dd2
+Accept: application/json
+
+###
+
 GET {{Product.Api_HostAddress}}/product/fetch?page=1&size=25
 Accept: application/json

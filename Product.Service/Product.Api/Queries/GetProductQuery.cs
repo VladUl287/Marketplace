@@ -1,9 +1,6 @@
-﻿using MediatR;
-using Product.Api.DTOs;
+﻿namespace Product.Api.Queries;
 
-namespace Product.Api.Queries;
-
-public sealed class GetProductQuery(Guid id) : IRequest<ProductDTO>
+public sealed class GetProductQuery
 {
-    public Guid Id => id;
+    public Guid Id { get; init; }
 }
