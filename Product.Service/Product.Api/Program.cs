@@ -34,10 +34,17 @@ var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 {
     app.MapPrometheusScrapingEndpoint();
-    app.MapControllers();
+    //app.MapControllers();
 
-    app.UseFastEndpoints()
-        .UseSwaggerUi();
+    app.UseFastEndpoints();
+    //app.UseFastEndpoints(c =>
+    //{
+    //    c.Endpoints.Configurator = ep =>
+    //    {
+    //        ep.PreProcessor<CachePreProcessor>(Order.Before);
+    //        ep.PostProcessor<CachePostProcessor>(Order.After);
+    //    };
+    //});
 
     //if (app.Environment.IsDevelopment())
     //{

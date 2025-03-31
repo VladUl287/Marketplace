@@ -18,18 +18,10 @@ public sealed class GetProductEndpoint(
         AllowAnonymous();
     }
 
-    private static int Time = 1;
-
     public override async Task HandleAsync(GetProductQuery request, CancellationToken cancellationToken)
     {
-        if (Time % 2 == 0)
-        {
-            await cache.RemoveByTagAsync("product", cancellationToken);
-        }
-        Time++;
-
         var product = await cache.GetOrCreateAsync(
-                $"product-{request.Id}",
+                request.BuildKey(),
                 request,
                 async (state, cancel) =>
                 {
@@ -45,7 +37,7 @@ public sealed class GetProductEndpoint(
                 {
                     Expiration = TimeSpan.FromHours(3)
                 },
-                tags: ["product"],
+                tags: request.Tags,
                 cancellationToken: cancellationToken
             );
 
