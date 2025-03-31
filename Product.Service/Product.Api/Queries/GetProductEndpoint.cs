@@ -16,7 +16,7 @@ public sealed class GetProductEndpoint(
     {
         Get("/product/get");
         PreProcessor<CachePreProcessor<GetProductQuery, ProductDTO>>();
-        PostProcessor<CachePostProcessor<GetProductQuery, ProductDTO>>();
+        PostProcessor<CachePostProcessor<GetProductQuery, ProductDTO?>>();
 
         AllowAnonymous();
     }
