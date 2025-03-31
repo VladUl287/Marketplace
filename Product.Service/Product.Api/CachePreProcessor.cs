@@ -4,26 +4,26 @@ using Product.Api.Abstractions.Request;
 
 namespace Product.Api;
 
-public sealed class CachePreProcessor(HybridCache hybridCache, IServiceProvider _serviceProvider) : IGlobalPreProcessor
+public sealed class CachePreProcessor<TRequest, TResponse>(HybridCache hybridCache) : PreProcessor<TRequest, CacheBag> where TRequest : Cacheable
 {
-    public async Task PreProcessAsync(IPreProcessorContext context, CancellationToken token)
+    public override async Task PreProcessAsync(IPreProcessorContext<TRequest> context, CacheBag state, CancellationToken ct)
     {
-        if (context.Request is Cacheable cacheable)
-        {
-            var cachedValue = await hybridCache.GetOrCreateAsync<object?>(
-                cacheable.BuildKey(),
-                factory: null,
-                new()
-                {
-                    Flags = HybridCacheEntryFlags.DisableUnderlyingData
-                },
-                cacheable.Tags,
-                token);
+        var request = context.Request ?? throw new NullReferenceException();
 
-            if (cachedValue is not null)
+        var cachedValue = await hybridCache.GetOrCreateAsync<TResponse>(
+            request.BuildKey(),
+            factory: null,
+            new()
             {
-                await context.HttpContext.Response.SendAsync(cachedValue, cancellation: token);
-            }
+                Flags = HybridCacheEntryFlags.DisableUnderlyingData
+            },
+            request.Tags,
+            ct);
+
+        if (cachedValue is not null)
+        {
+            state.IsCached = true;
+            await context.HttpContext.Response.SendAsync(cachedValue, cancellation: ct);
         }
     }
 }
