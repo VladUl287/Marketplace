@@ -1,4 +1,4 @@
-﻿namespace Product.Api;
+﻿namespace Product.Api.Processors;
 
 public sealed class CacheBag
 {

@@ -1,11 +1,16 @@
 using FastEndpoints;
-using OpenTelemetry.Trace;
-using Product.Api;
 using Product.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 {
-    builder.Services.AddHybridCache();
+    builder.Services.AddHybridCache(options =>
+    {
+        options.DefaultEntryOptions = new()
+        {
+            Expiration = TimeSpan.FromHours(3),
+            LocalCacheExpiration = TimeSpan.FromHours(3)
+        };
+    });
 
     builder.Services.AddStackExchangeRedisCache(options =>
     {
@@ -14,47 +19,30 @@ var builder = WebApplication.CreateBuilder(args);
 
     builder.Services.AddControllers();
 
-    builder.Services.AddFastEndpoints();
-
     //builder.AddVault();
 
     builder.AddOtpl();
-    
-    //builder.AddOptions();
 
-    //builder.AddDatabase();
+    builder.AddOptions();
 
-    //builder.AddKafkaBus();
+    builder.AddDatabase();
 
-    //builder.Services.AddHostedService<Hosted>();
+    builder.AddKafkaBus();
 
-    //builder.Services.AddOpenApi();
+    builder.Services.AddAuthorization();
+    builder.Services.AddFastEndpoints();
 }
 
 var app = builder.Build();
 {
     app.MapPrometheusScrapingEndpoint();
-    //app.MapControllers();
+
+    app.UseHttpsRedirection();
+
+    app.UseAuthorization();
 
     app.UseFastEndpoints();
-    //app.UseFastEndpoints(c =>
-    //{
-    //    c.Endpoints.Configurator = ep =>
-    //    {
-    //        ep.PreProcessor<CachePreProcessor>(Order.Before);
-    //        ep.PostProcessor<CachePostProcessor>(Order.After);
-    //    };
-    //});
 
-    //if (app.Environment.IsDevelopment())
-    //{
-    //    app.MapOpenApi();
-    //}
-
-    //app.UseHttpsRedirection();
-
-    //app.UseAuthorization();
-
-    //app.MapControllers();
+    app.MapControllers();
 }
 app.Run();

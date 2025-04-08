@@ -2,21 +2,24 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Product.Api.Abstractions.Request;
 
-namespace Product.Api;
+namespace Product.Api.Processors;
 
-public sealed class CachePreProcessor<TRequest, TResponse>(HybridCache hybridCache) : PreProcessor<TRequest, CacheBag> where TRequest : Cacheable
+public sealed class CachePreProcessor<TRequest, TResponse>(HybridCache hybridCache) : PreProcessor<TRequest, CacheBag> 
+    where TRequest : Cacheable
 {
+    private static readonly HybridCacheEntryOptions _options = new()
+    {
+        Flags = HybridCacheEntryFlags.DisableUnderlyingData
+    };
+
     public override async Task PreProcessAsync(IPreProcessorContext<TRequest> context, CacheBag state, CancellationToken ct)
     {
         var request = context.Request ?? throw new NullReferenceException();
 
         var cachedValue = await hybridCache.GetOrCreateAsync<TResponse>(
-            request.BuildKey(),
+            request.GetKey(),
             factory: null,
-            new()
-            {
-                Flags = HybridCacheEntryFlags.DisableUnderlyingData
-            },
+            _options,
             request.Tags,
             ct);
 

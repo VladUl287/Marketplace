@@ -10,7 +10,7 @@ Accept: application/json
 
 ###
 
-GET {{Product.Api_HostAddress}}/product/get?id=885331d6-e4e8-442c-8596-bef3a0c09dd2
+GET {{Product.Api_HostAddress}}/product/get?id=01961688-327f-7af5-bced-7af0bda1ba13
 Accept: application/json
 
 ###

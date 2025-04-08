@@ -2,10 +2,9 @@
 
 namespace Product.Api.Abstractions.Request;
 
-
 public abstract class Cacheable
 {
-    public virtual ImmutableArray<string> Tags => [];
+    public abstract string GetKey();
 
-    public abstract string BuildKey();
+    public virtual ImmutableArray<string> Tags => [];
 }
